@@ -3,32 +3,32 @@ import './closet'
 import utils from './utils'
 import Template from './template'
 
-//stroke类型操作
+// stroke类型操作
 const STROKE_TYPES = ['rect', 'ellipse', 'brush', 'arrow', 'mosaic', 'font', 'rubber']
 
-//默认颜色
+// 默认颜色
 const STROKE_DEFAULT_COLOR = '#fb3838'
 
-//默认画笔大小
+// 默认画笔大小
 const STROKE_DEFAULT_WIDTH = 2
 
-//辅助输入框padding值
+// 辅助输入框padding值
 const TEXT_HELPER_PADDING = 2
 
-//辅助输入框层级
+// 辅助输入框层级
 const TEXT_HELPER_ZINDEX = 1990
 
-//辅助输入框ID
+// 辅助输入框ID
 const TEXT_HELPER_ID = 'canvas-tools_text_helper'
 
-//输入框默认字体大小
-//以设置的字体大小为准，改值仅做辅助值
+// 输入框默认字体大小
+// 以设置的字体大小为准，改值仅做辅助值
 const TEXT_HELPER_FONT_SIZE = 12
 
-//字体
+// 字体
 const TEXT_FONT_FAMILY = '"Helvetica Neue",Helvetica,Arial,"Hiragino Sans GB","Hiragino Sans GB W3","WenQuanYi Micro Hei",sans-serif'
 
-//马赛克模糊度
+// 马赛克模糊度
 const AMBIGUITY_LEVEL = .7
 
 /**
@@ -88,7 +88,7 @@ const getTextHelper = () => {
         document.body.appendChild($textHelper)
     }
     $textHelper.innerHTML = ''
-    $textHelper.style.cssText = 'display: block';
+    $textHelper.style.cssText = 'display: block'
     return $textHelper
 }
 
@@ -143,7 +143,7 @@ const insertTextHelper = (event, state, rect) => {
         left: x + 'px',
         color: state.strokeColor,
         padding: TEXT_HELPER_PADDING + 'px',
-        overflow: 'hidden',
+        overflow: 'hidden'
     }
 
     let style = ''
@@ -167,9 +167,8 @@ const removeTextHelper = () => {
         return
     }
     $textHelper.innerHTML = ''
-    $textHelper.style.cssText = 'display: none';
+    $textHelper.style.cssText = 'display: none'
 }
-
 
 /**
  * 获取鼠标在Canvas上的位置
@@ -191,25 +190,24 @@ const getPos = (event, rect) => {
     }
 }
 
-
 /**
  * 默认配置
  * @type {Object}
  */
 const defaults = {
-    //工具条父级对象容器
+    // 工具条父级对象容器
     container: document.body,
-    //显示按钮
+    // 显示按钮
     buttons: ['rect', 'ellipse', 'brush', 'font', 'mosaic', 'undo', 'save']
 }
 
-//创建一个下载链接
-const $saveLink = document.createElementNS('http://www.w3.org/1999/xhtml', 'a')
+// 创建一个下载链接
+const $saveLink = document.createElementNS('http:// www.w3.org/1999/xhtml', 'a')
 
-//是否支持原生下载
+// 是否支持原生下载
 const canUseSaveLink = 'download' in $saveLink
 
-//下载文件
+// 下载文件
 const __downloadFile = function() {
     const fileName = `canvas_${Date.now()}.png`
     const canvas = this.canvas
@@ -221,36 +219,26 @@ const __downloadFile = function() {
             $saveLink.href = fileUrl
             $saveLink.download = fileName
 
-            //触发click事件
+            // 触发click事件
             $saveLink.dispatchEvent(new MouseEvent('click'))
         })
     }
 
-    //for ie 10+ 
-    else if (typeof navigator !== "undefined" && typeof canvas.msToBlob === 'function' && navigator.msSaveBlob) {
+    // for ie 10+ 
+    else if (typeof navigator !== 'undefined' && typeof canvas.msToBlob === 'function' && navigator.msSaveBlob) {
         navigator.msSaveBlob(canvas.msToBlob(), fileName)
     }
 
-    // other 
+    //  other 
     else {
         console.log('您的浏览器不支持该操作')
     }
 }
 
-
-//相关事件绑定
+// 相关事件绑定
 function __bindEvents() {
     const self = this
-    const {
-        canvas,
-        context,
-        $el,
-        state,
-        config,
-        rect,
-        _handles,
-        history
-    } = this
+    const { canvas, context, $el, state, config, rect, _handles, history } = this
 
     const $btns = utils.$('.js-btn', $el),
         $fontPanel = utils.$('.js-panel__font', $el)[0],
@@ -262,7 +250,7 @@ function __bindEvents() {
         $fontSize = utils.$('.js-font-size', $el),
         $mosaicAmbiguity = utils.$('.js-mosaic-ambiguity', $el)
 
-    //按钮事件
+    // 按钮事件
     _handles.btnEmit = function(event) {
         event.stopPropagation()
         if (state.drawType === 'font') {
@@ -296,8 +284,8 @@ function __bindEvents() {
                 $strokePanel.style.display = 'none'
             }
         } else {
-            //$fontPanel.style.display = 'none'
-            //$strokePanel.style.display = 'none'
+            // $fontPanel.style.display = 'none'
+            // $strokePanel.style.display = 'none'
         }
 
         if (value === 'save') {
@@ -305,8 +293,8 @@ function __bindEvents() {
             return
         }
 
-        //history[0]是画布的初始状态
-        //因此只有多于1个历史记录时才可以恢复上一步
+        // history[0]是画布的初始状态
+        // 因此只有多于1个历史记录时才可以恢复上一步
         if (value === 'undo' && history.length > 1) {
             history.pop()
             context.putImageData(history[history.length - 1], 0, 0, 0, 0, rect.width, rect.height)
@@ -334,7 +322,7 @@ function __bindEvents() {
         state.fontSize = Number(this.value)
     }
 
-    //鼠标在画布上的初始位置
+    // 鼠标在画布上的初始位置
     let _startPos
 
     _handles.onMouseDown = function(event) {
@@ -343,10 +331,10 @@ function __bindEvents() {
         }
         _startPos = getPos(event, rect)
 
-        //保存当前快照
+        // 保存当前快照
         state.lastImageData = context.getImageData(0, 0, rect.width, rect.height)
 
-        //初始化context状态
+        // 初始化context状态
         context.lineCap = 'round'
         context.lineJoin = 'round'
         context.shadowBlur = 0
@@ -438,30 +426,30 @@ function __bindEvents() {
         console.log(state)
     }
 
-    //按钮事件
+    // 按钮事件
     utils.$on($btns, 'click', _handles.btnEmit)
 
-    //切换颜色
+    // 切换颜色
     utils.$on($colors, 'click', _handles.toggleColor)
 
-    //切换画笔大小
+    // 切换画笔大小
     utils.$on($strokeWidth, 'click', _handles.toggleStrokeWidth)
 
-    //切换字体大小
+    // 切换字体大小
     utils.$on($fontSize, 'change', _handles.toggleFontSize)
 
     utils.$on($mosaicAmbiguity, 'change', _handles.toggleAmbiguity)
 
-    //矩形，椭圆，画笔等绘制
+    // 矩形，椭圆，画笔等绘制
     utils.$on(canvas, 'mousedown', _handles.onMouseDown)
 
-    //插入文本辅助框
+    // 插入文本辅助框
     utils.$on(canvas, 'click', _handles.insertTextHelper)
 
-    //移除文本辅助框
+    // 移除文本辅助框
     utils.$on(document, 'click', _handles.removeTextHelper)
 
-    //window resize
+    // window resize
     window.addEventListener('resize', _handles.resize)
 }
 
@@ -472,11 +460,7 @@ function __bindEvents() {
  * @return 
  */
 function __drawRect(event, start) {
-    const {
-        context,
-        rect,
-        state
-    } = this
+    const { context, rect, state } = this
     const pos = getPos(event, rect)
     let width = pos.x - start.x
     let height = pos.y - start.y
@@ -489,7 +473,6 @@ function __drawRect(event, start) {
     context.closePath()
 }
 
-
 /**
  * 绘制椭圆
  * @param  {MouseEvent} event [鼠标事件]
@@ -497,11 +480,7 @@ function __drawRect(event, start) {
  * @return 
  */
 function __drawEllipse(event, start) {
-    const {
-        context,
-        rect,
-        state
-    } = this
+    const { context, rect, state } = this
     const pos = getPos(event, rect)
     let scaleX = 1 * ((pos.x - start.x) / 2)
     let scaleY = 1 * ((pos.y - start.y) / 2)
@@ -518,7 +497,6 @@ function __drawEllipse(event, start) {
     context.stroke()
 }
 
-
 /**
  * 画笔工具自由绘制
  * @param  {MouseEvent} event [鼠标事件]
@@ -526,10 +504,7 @@ function __drawEllipse(event, start) {
  * @return 
  */
 function __drawBrush(event, start = null) {
-    const {
-        context,
-        rect
-    } = this
+    const { context, rect } = this
     if (start) {
         context.beginPath()
         context.moveTo(start.x, start.y)
@@ -539,7 +514,6 @@ function __drawBrush(event, start = null) {
         context.stroke()
     }
 }
-
 
 /**
  * 绘制文字
@@ -577,7 +551,7 @@ function __drawFont(event) {
     for (let i = 0; i < length; i++) {
         let char = content[i]
 
-        //让文字自动换行
+        // 让文字自动换行
         lineWidth += context.measureText(char).width
         if (lineWidth > this.rect.width - x) {
             context.fillText(content.substring(lastSubStrIndex, i), x, y)
@@ -586,7 +560,7 @@ function __drawFont(event) {
             lastSubStrIndex = i
         }
         if (i == length - 1) {
-            context.fillText(content.substring(lastSubStrIndex, i + 1), x, y);
+            context.fillText(content.substring(lastSubStrIndex, i + 1), x, y)
         }
     }
     context.restore()
@@ -596,22 +570,17 @@ function __drawFont(event) {
     __pushHistory.call(this)
 }
 
-
 /**
  * 绘制马赛克
  * @param  {MouseEvent} event [鼠标事件]
  * @return {[type]} 
  */
 function __drawMoasic(event) {
-    const {
-        context,
-        state,
-        rect
-    } = this
+    const { context, state, rect } = this
     const pos = getPos(event, rect)
     const size = state.strokeWidth * 3
 
-    //获取当前位置1PX的颜色值
+    // 获取当前位置1PX的颜色值
     const data = context.getImageData(pos.x, pos.y, size, size).data
 
     let r = 0,
@@ -636,7 +605,6 @@ function __drawMoasic(event) {
     context.fillRect(pos.x, pos.y, size, size)
     context.restore()
 }
-
 
 /**
  * 切换鼠标指针
@@ -666,7 +634,6 @@ function __toggleCanvasCursor() {
         canvas.className = canvas.className.replace(/canvas-cursor__(\w+)/, '').trim() + ` canvas-cursor__${cursor}`
     }
 }
-
 
 /**
  * 保存到历史记录
@@ -718,10 +685,10 @@ class CanvasTools {
         this.rect.top = rect.top
         this.rect.left = rect.left
 
-        //保存现场
+        // 保存现场
         this.state.lastImageData = this.context.getImageData(0, 0, this.rect.width, this.rect.height)
 
-        //将画布的初始状态保存到历史记录
+        // 将画布的初始状态保存到历史记录
         __pushHistory.call(this)
 
         __toggleCanvasCursor.call(this)
@@ -748,20 +715,14 @@ class CanvasTools {
         __bindEvents.call(this)
     }
 
-    refresh() {
-
-    }
+    refresh() {}
 
     /**
      * destory
      * @return 
      */
     destory() {
-        const {
-            canvas,
-            $el,
-            _handles
-        } = this
+        const { canvas, $el, _handles } = this
 
         const $btns = utils.$('.js-btn', $el),
             $colors = utils.$('.js-color', $el),

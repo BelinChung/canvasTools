@@ -31,6 +31,12 @@ const TEXT_FONT_FAMILY = '"Helvetica Neue",Helvetica,Arial,"Hiragino Sans GB","H
 // 马赛克模糊度
 const AMBIGUITY_LEVEL = .7
 
+// canvas 画布宽度与其在DOM中显示的比例
+const CANVAS_CONTEXT_SCALE_X = 2
+
+// canvas 画布高度与其在DOM中显示的比例
+const CANVAS_CONTEXT_SCALE_Y = 2
+
 /**
  * 创建画笔+颜色容器
  * @param  {Number} stroke [默认画笔]
@@ -75,9 +81,10 @@ const buildAmbiguityPanel = (stroke = STROKE_DEFAULT_COLOR, ambiguity = AMBIGUIT
 
 /**
  * 创建辅助文本输入框
+ * @param  {HTMLElement} container 指定容器
  * @return {HTMLElement}
  */
-const getTextHelper = () => {
+const getTextHelper = (container) => {
     let $textHelper = document.getElementById(TEXT_HELPER_ID)
     if (!$textHelper) {
         $textHelper = document.createElement('div')
@@ -85,10 +92,14 @@ const getTextHelper = () => {
         $textHelper.setAttribute('spellcheck', 'false')
         $textHelper.setAttribute('id', TEXT_HELPER_ID)
         $textHelper.className = TEXT_HELPER_ID
-        document.body.appendChild($textHelper)
+        if (container) {
+            container.appendChild($textHelper)
+        } else {
+            document.body.appendChild($textHelper)
+        }
     }
     $textHelper.innerHTML = ''
-    $textHelper.style.cssText = 'display: block'
+        // $textHelper.style.cssText = 'display: block'
     return $textHelper
 }
 
@@ -138,7 +149,7 @@ const insertTextHelper = (event, state, rect) => {
         'z-index': TEXT_HELPER_ZINDEX,
         'font-family': TEXT_FONT_FAMILY,
         display: 'block',
-        position: 'absolute',
+        position: 'fixed',
         top: y + 'px',
         left: x + 'px',
         color: state.strokeColor,
@@ -183,7 +194,8 @@ const getPos = (event, rect) => {
     if (x >= rect.width) x = rect.width
     if (y <= 0) y = 0
     if (y >= rect.height) y = rect.height
-
+    x *= CANVAS_CONTEXT_SCALE_X
+    y *= CANVAS_CONTEXT_SCALE_Y
     return {
         x,
         y
@@ -202,7 +214,7 @@ const defaults = {
 }
 
 // 创建一个下载链接
-const $saveLink = document.createElementNS('http:// www.w3.org/1999/xhtml', 'a')
+const $saveLink = document.createElementNS('http://www.w3.org/1999/xhtml', 'a')
 
 // 是否支持原生下载
 const canUseSaveLink = 'download' in $saveLink
@@ -229,7 +241,7 @@ const __downloadFile = function() {
         navigator.msSaveBlob(canvas.msToBlob(), fileName)
     }
 
-    //  other 
+    // other 
     else {
         console.log('您的浏览器不支持该操作')
     }
@@ -538,11 +550,10 @@ function __drawFont(event) {
         padding = 2 * TEXT_HELPER_PADDING,
         context = this.context
 
-    let x = parseFloat(style.left) - this.rect.left + padding - 2,
-        y = parseFloat(style.top) - this.rect.top + threshold,
+    let x = (parseFloat(style.left) - this.rect.left) * CANVAS_CONTEXT_SCALE_X + padding - 2,
+        y = (parseFloat(style.top) - this.rect.top) * CANVAS_CONTEXT_SCALE_Y + threshold,
         lineWidth = 0,
         lastSubStrIndex = 0
-
     context.beginPath()
     context.save()
     context.fillStyle = this.state.strokeColor
@@ -713,6 +724,7 @@ class CanvasTools {
         this.$el.appendChild(buildFontPanel(S.fontSize, S.strokeColor))
         this.$el.appendChild(buildAmbiguityPanel(S.strokeWidth, S.ambiguity))
         __bindEvents.call(this)
+        getTextHelper(this.config.container)
     }
 
     refresh() {}

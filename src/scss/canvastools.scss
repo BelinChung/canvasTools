@@ -304,3 +304,9 @@ $mosaic: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0A
     left: 50%;
     margin-left: -110px;
 }
+
+.tools-draggable {
+    position: absolute;
+    z-index: 10;
+    cursor: move;
+}

@@ -337,59 +337,74 @@ function __bindEvents() {
     // 鼠标在画布上的初始位置
     let _startPos
 
+    // 容器拖动
+    let draggingObj = null
+    let diffX = 0
+    let diffY = 0
+
     _handles.onMouseDown = function(event) {
-        if (!!~STROKE_TYPES.indexOf(state.drawType) === false || state.drawType === 'font') {
+        if (event.currentTarget.className.indexOf('tools-draggable') != -1) {
+            draggingObj = event.currentTarget
+            diffX = draggingObj.offsetLeft - event.clientX
+            diffY = draggingObj.offsetTop - event.clientY
+        } else if (!!~STROKE_TYPES.indexOf(state.drawType) === false || state.drawType === 'font') {
             return
+        } else {
+            _startPos = getPos(event, rect)
+
+            // 保存当前快照
+            state.lastImageData = context.getImageData(0, 0, rect.width, rect.height)
+
+            // 初始化context状态
+            context.lineCap = 'round'
+            context.lineJoin = 'round'
+            context.shadowBlur = 0
+            context.strokeStyle = state.strokeColor
+            context.lineWidth = state.strokeWidth
+            switch (state.drawType) {
+                case 'rect':
+                    __drawRect.call(self, event, _startPos)
+                    break
+                case 'ellipse':
+                    __drawEllipse.call(self, event, _startPos)
+                    break
+                case 'mosaic':
+                    __drawMoasic.call(self, event)
+                    break
+                case 'brush':
+                default:
+                    __drawBrush.call(self, event, _startPos)
+                    break
+            }
         }
-        _startPos = getPos(event, rect)
-
-        // 保存当前快照
-        state.lastImageData = context.getImageData(0, 0, rect.width, rect.height)
-
-        // 初始化context状态
-        context.lineCap = 'round'
-        context.lineJoin = 'round'
-        context.shadowBlur = 0
-        context.strokeStyle = state.strokeColor
-        context.lineWidth = state.strokeWidth
-        switch (state.drawType) {
-            case 'rect':
-                __drawRect.call(self, event, _startPos)
-                break
-            case 'ellipse':
-                __drawEllipse.call(self, event, _startPos)
-                break
-            case 'mosaic':
-                __drawMoasic.call(self, event)
-                break
-            case 'brush':
-            default:
-                __drawBrush.call(self, event, _startPos)
-                break
-        }
-
         utils.$on(document, 'mousemove', _handles.onMouseMove)
         utils.$on(document, 'mouseup', _handles.onMouseUp)
     }
 
     _handles.onMouseMove = function(event) {
-        if (!!~STROKE_TYPES.indexOf(state.drawType) === false || state.drawType === 'font') {
+        if (draggingObj) { // 只有draggingObj存在的时候才能拖动
+            config.container.style.marginLeft = '0px'
+            config.container.style.bottom = 'auto'
+            config.container.style.left = (diffX + event.clientX) + 'px'
+            config.container.style.top = (diffY + event.clientY) + 'px'
+        } else if (!!~STROKE_TYPES.indexOf(state.drawType) === false || state.drawType === 'font') {
             return
-        }
-        switch (state.drawType) {
-            case 'rect':
-                __drawRect.call(self, event, _startPos)
-                break
-            case 'ellipse':
-                __drawEllipse.call(self, event, _startPos)
-                break
-            case 'mosaic':
-                __drawMoasic.call(self, event)
-                break
-            case 'brush':
-            default:
-                __drawBrush.call(self, event, null)
-                break
+        } else {
+            switch (state.drawType) {
+                case 'rect':
+                    __drawRect.call(self, event, _startPos)
+                    break
+                case 'ellipse':
+                    __drawEllipse.call(self, event, _startPos)
+                    break
+                case 'mosaic':
+                    __drawMoasic.call(self, event)
+                    break
+                case 'brush':
+                default:
+                    __drawBrush.call(self, event, null)
+                    break
+            }
         }
     }
 
@@ -399,6 +414,9 @@ function __bindEvents() {
         if (!!~STROKE_TYPES.indexOf(state.drawType) && state.drawType !== 'font') {
             __pushHistory.call(self)
         }
+        draggingObj = null
+        diffX = 0
+        diffY = 0
     }
 
     _handles.insertTextHelper = function(event) {
@@ -463,6 +481,9 @@ function __bindEvents() {
 
     // window resize
     window.addEventListener('resize', _handles.resize)
+
+    // 容器可拖动
+    utils.$on(config.container, 'mousedown', _handles.onMouseDown)
 }
 
 /**
@@ -757,6 +778,7 @@ class CanvasTools {
         this.context = null
         this.history.length = 0
         this.config.container.removeChild(this.$el)
+        utils.$off(this.config.container, 'mousedown', _handles.onMouseDown)
     }
 
 }

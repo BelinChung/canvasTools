@@ -210,7 +210,7 @@ const defaults = {
     // 工具条父级对象容器
     container: document.body,
     // 显示按钮
-    buttons: ['rect', 'ellipse', 'brush', 'font', 'mosaic', 'undo', 'save']
+    buttons: ['rect', 'ellipse', 'brush', 'arrow', 'font', 'mosaic', 'undo', 'save']
 }
 
 // 创建一个下载链接
@@ -343,11 +343,13 @@ function __bindEvents() {
     let diffY = 0
 
     _handles.onMouseDown = function(event) {
-        if (event.currentTarget.className.indexOf('tools-draggable') != -1) {
+        if (event.currentTarget.className.indexOf('tools-draggable') != -1 &&
+            event.target.className == 'canvas-tools') {
             draggingObj = event.currentTarget
             diffX = draggingObj.offsetLeft - event.clientX
             diffY = draggingObj.offsetTop - event.clientY
-        } else if (!!~STROKE_TYPES.indexOf(state.drawType) === false || state.drawType === 'font') {
+        } else if (!!~STROKE_TYPES.indexOf(state.drawType) === false || state.drawType === 'font' ||
+            event.target.className == 'canvas-tools-icon__undo') {
             return
         } else {
             _startPos = getPos(event, rect)
@@ -360,7 +362,9 @@ function __bindEvents() {
             context.lineJoin = 'round'
             context.shadowBlur = 0
             context.strokeStyle = state.strokeColor
+            context.fillStyle = state.strokeColor
             context.lineWidth = state.strokeWidth
+
             switch (state.drawType) {
                 case 'rect':
                     __drawRect.call(self, event, _startPos)
@@ -370,6 +374,9 @@ function __bindEvents() {
                     break
                 case 'mosaic':
                     __drawMoasic.call(self, event)
+                    break
+                case 'arrow':
+                    __drawArrow.call(self, event, _startPos)
                     break
                 case 'brush':
                 default:
@@ -399,6 +406,9 @@ function __bindEvents() {
                     break
                 case 'mosaic':
                     __drawMoasic.call(self, event)
+                    break
+                case 'arrow':
+                    __drawArrow.call(self, event, _startPos)
                     break
                 case 'brush':
                 default:
@@ -528,6 +538,81 @@ function __drawEllipse(event, start) {
     context.restore()
     context.closePath()
     context.stroke()
+}
+
+/**
+ * 绘制剪头
+ * @param  {MouseEvent} event [鼠标事件]
+ * @param  {Object} start [起始位置]
+ * @return 
+ */
+function __drawArrow(event, start) {
+    const { context, rect, state } = this
+    const pos = getPos(event, rect)
+    let scaleX = 1 * ((pos.x - start.x) / 2)
+    let scaleY = 1 * ((pos.y - start.y) / 2)
+    let x = (start.x / scaleX) + 1
+    let y = (start.y / scaleY) + 1
+    context.clearRect(0, 0, rect.width, rect.height)
+    context.putImageData(state.lastImageData, 0, 0, 0, 0, rect.width, rect.height)
+    context.save()
+    context.beginPath()
+    let polygonVertex = calculationArrowCoords.call(this, start, pos)
+    context.moveTo(polygonVertex[0], polygonVertex[1])
+    context.lineTo(polygonVertex[2], polygonVertex[3])
+    context.lineTo(polygonVertex[4], polygonVertex[5])
+    context.lineTo(polygonVertex[6], polygonVertex[7])
+    context.lineTo(polygonVertex[8], polygonVertex[9])
+    context.lineTo(polygonVertex[10], polygonVertex[11])
+    context.restore()
+    context.closePath()
+    context.fill()
+}
+/**
+ * 
+ * @param {Object} beginPoint [起始位置]
+ * @param {Object} stopPoint [终止位置]
+ */
+function calculationArrowCoords(beginPoint, stopPoint) {
+    const { state } = this
+    // 多边形的顶点
+    let polygonVertex = []
+        // 默认边长度,角度
+    let edgeLen = 10 * state.strokeWidth,
+        angle = 25
+        // 短距离画箭头的时候会出现箭头头部过大，修改：
+    let x = stopPoint.x - beginPoint.x,
+        y = stopPoint.y - beginPoint.y,
+        length = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2))
+    if (length < 250) {
+        edgeLen = edgeLen / 2
+        angle = angle / 2
+    } else if (length < 500) {
+        edgeLen = edgeLen * length / 500
+        angle = angle * length / 500
+    }
+    // 起始点坐标
+    polygonVertex[0] = beginPoint.x
+    polygonVertex[1] = beginPoint.y
+    polygonVertex[6] = stopPoint.x
+    polygonVertex[7] = stopPoint.y
+        // 起始点连线与x轴夹角
+    let angleBetweenArrowAndXAxis = Math.atan2(stopPoint.y - beginPoint.y,
+            stopPoint.x - beginPoint.x) / Math.PI * 180
+        // 获得箭头底边两个点
+    polygonVertex[8] = stopPoint.x - edgeLen * Math.cos(Math.PI / 180 * (angleBetweenArrowAndXAxis + angle))
+    polygonVertex[9] = stopPoint.y - edgeLen * Math.sin(Math.PI / 180 * (angleBetweenArrowAndXAxis + angle))
+    polygonVertex[4] = stopPoint.x - edgeLen * Math.cos(Math.PI / 180 * (angleBetweenArrowAndXAxis - angle))
+    polygonVertex[5] = stopPoint.y - edgeLen * Math.sin(Math.PI / 180 * (angleBetweenArrowAndXAxis - angle))
+        // 获取另两个底边侧面点
+    let midpoint = {}
+    midpoint.x = (polygonVertex[4] + polygonVertex[8]) / 2
+    midpoint.y = (polygonVertex[5] + polygonVertex[9]) / 2
+    polygonVertex[2] = (polygonVertex[4] + midpoint.x) / 2
+    polygonVertex[3] = (polygonVertex[5] + midpoint.y) / 2
+    polygonVertex[10] = (polygonVertex[8] + midpoint.x) / 2
+    polygonVertex[11] = (polygonVertex[9] + midpoint.y) / 2
+    return polygonVertex
 }
 
 /**
